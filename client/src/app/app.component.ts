@@ -1,0 +1,66 @@
+import { CommonModule } from "@angular/common";
+import { Component } from "@angular/core";
+import { RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { AuthService } from "./services/auth.service";
+
+@Component({
+  selector: "app-root",
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
+    <div class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-slate-100">
+      <header class="border-b border-slate-200 bg-white/90 backdrop-blur-sm">
+        <nav class="mx-auto flex max-w-6xl items-center justify-between p-4">
+          <a routerLink="/" class="text-lg font-semibold text-brand-700">Appointment Booking</a>
+          <div class="flex items-center gap-3 text-sm">
+            <a
+              routerLink="/appointments"
+              routerLinkActive="text-brand-700"
+              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              >Appointments</a
+            >
+            <a
+              *ngIf="auth.currentUser?.role === 'admin'"
+              routerLink="/admin"
+              routerLinkActive="text-brand-700"
+              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              >Admin</a
+            >
+            <a
+              *ngIf="!auth.isLoggedIn"
+              routerLink="/login"
+              routerLinkActive="text-brand-700"
+              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              >Login</a
+            >
+            <a
+              *ngIf="!auth.isLoggedIn"
+              routerLink="/register"
+              routerLinkActive="text-brand-700"
+              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              >Register</a
+            >
+            <button
+              *ngIf="auth.isLoggedIn"
+              class="rounded bg-brand-500 px-3 py-2 text-white hover:bg-brand-700"
+              (click)="logout()"
+            >
+              Logout
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      <main class="mx-auto max-w-6xl p-4">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  `
+})
+export class AppComponent {
+  constructor(public readonly auth: AuthService) {}
+
+  logout() {
+    this.auth.logout();
+  }
+}

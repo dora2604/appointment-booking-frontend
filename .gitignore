@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.angular/
+.env.local
+client/dist/
+server/dist/
+server/uploads/*
+!server/uploads/.gitkeep
+server/data/*
+!server/data/.gitkeep
+npm-debug.log*
