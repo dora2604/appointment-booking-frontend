@@ -1,3 +1,3 @@
 export const environment = {
-  apiBaseUrl: "https://appoinment-booking-system-1.onrender.com/api"
+  apiBaseUrl: "https://appointment-booking-system-2.onrender.com/api"
 };
