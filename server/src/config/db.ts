@@ -11,11 +11,8 @@ export const connectDb = async () => {
     console.log("MongoDB connected.");
   } catch (error) {
     isMongoConnected = false;
-    if (!env.ALLOW_DEMO_STORAGE) {
-      throw error;
-    }
     // eslint-disable-next-line no-console
-    console.warn("MongoDB unavailable. Using local JSON file storage for demo mode.");
+    console.warn("MongoDB unavailable. Using local JSON file storage.");
     // eslint-disable-next-line no-console
     console.warn(error);
   }
