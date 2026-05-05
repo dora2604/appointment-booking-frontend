@@ -4,7 +4,7 @@
   "description": "Appointment Booking System API",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "npm install --include=dev && tsc",
+    "build": "tsc",
     "start": "node dist/server.js"
   },
   "dependencies": {
