@@ -4,7 +4,7 @@
   "description": "Appointment Booking System API",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
+    "build": "npm install --include=dev && tsc",
     "start": "node dist/server.js"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.0",
     "@types/morgan": "^1.9.10",
@@ -36,6 +37,6 @@
     "typescript": "^5.0.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": "20.x"
   }
 }
