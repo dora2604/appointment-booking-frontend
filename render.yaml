@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: appointment-booking-server
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    # Set these environment variables in the Render dashboard:
+    #   MONGO_URI
+    #   JWT_SECRET
+    #   JWT_EXPIRES_IN
+    #   CLIENT_ORIGIN
+    #   ALLOW_DEMO_STORAGE
+
+  - type: static
+    name: appointment-booking-client
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: cd client && npm install && npm run build
+    publishPath: client/dist/appointment-booking-client
