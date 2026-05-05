@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
-import { RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { Component, inject } from "@angular/core";
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { AuthService } from "./services/auth.service";
 
 @Component({
@@ -15,34 +15,39 @@ import { AuthService } from "./services/auth.service";
           <div class="flex items-center gap-3 text-sm">
             <a
               routerLink="/appointments"
-              routerLinkActive="text-brand-700"
-              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              routerLinkActive="text-brand-700 bg-brand-50"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
               >Appointments</a
             >
             <a
               *ngIf="auth.currentUser?.role === 'admin'"
               routerLink="/admin"
-              routerLinkActive="text-brand-700"
-              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              routerLinkActive="text-brand-700 bg-brand-50"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
               >Admin</a
             >
             <a
               *ngIf="!auth.isLoggedIn"
               routerLink="/login"
-              routerLinkActive="text-brand-700"
-              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              routerLinkActive="text-brand-700 bg-brand-50"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
               >Login</a
             >
             <a
               *ngIf="!auth.isLoggedIn"
               routerLink="/register"
-              routerLinkActive="text-brand-700"
-              class="rounded px-3 py-2 text-slate-600 hover:bg-brand-50"
+              routerLinkActive="text-brand-700 bg-brand-50"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
               >Register</a
             >
             <button
               *ngIf="auth.isLoggedIn"
-              class="rounded bg-brand-500 px-3 py-2 text-white hover:bg-brand-700"
+              type="button"
+              class="rounded bg-brand-500 px-3 py-2 text-white transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
               (click)="logout()"
             >
               Logout
@@ -58,9 +63,12 @@ import { AuthService } from "./services/auth.service";
   `
 })
 export class AppComponent {
+  public readonly router = inject(Router);
+
   constructor(public readonly auth: AuthService) {}
 
   logout() {
     this.auth.logout();
+    this.router.navigateByUrl("/login");
   }
 }
