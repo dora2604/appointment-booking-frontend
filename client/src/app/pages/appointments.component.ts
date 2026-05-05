@@ -13,35 +13,51 @@ import { AuthService } from "../services/auth.service";
   imports: [CommonModule, ReactiveFormsModule, DatePipe],
   template: `
     <section class="space-y-6">
-      <div *ngIf="isAdmin && summary" class="grid gap-3 md:grid-cols-5">
-        <div class="rounded-lg bg-white p-4 shadow-soft">
-          <p class="text-xs uppercase text-slate-500">Total</p>
-          <p class="text-2xl font-bold text-slate-800">{{ summary.total }}</p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">Appointments</p>
+          <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+            {{ isAdmin ? "Appointment Operations" : "My Booking Workspace" }}
+          </h1>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            {{ isAdmin ? "Review incoming bookings, update statuses, and monitor appointment activity." : "Book new appointments and keep track of your upcoming schedule." }}
+          </p>
         </div>
-        <div class="rounded-lg bg-white p-4 shadow-soft">
-          <p class="text-xs uppercase text-slate-500">Pending</p>
-          <p class="text-2xl font-bold text-amber-600">{{ summary.pending }}</p>
-        </div>
-        <div class="rounded-lg bg-white p-4 shadow-soft">
-          <p class="text-xs uppercase text-slate-500">Confirmed</p>
-          <p class="text-2xl font-bold text-brand-700">{{ summary.confirmed }}</p>
-        </div>
-        <div class="rounded-lg bg-white p-4 shadow-soft">
-          <p class="text-xs uppercase text-slate-500">Completed</p>
-          <p class="text-2xl font-bold text-emerald-600">{{ summary.completed }}</p>
-        </div>
-        <div class="rounded-lg bg-white p-4 shadow-soft">
-          <p class="text-xs uppercase text-slate-500">Cancelled</p>
-          <p class="text-2xl font-bold text-red-600">{{ summary.cancelled }}</p>
+        <div class="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+          <span class="font-semibold text-slate-950">{{ totalItems }}</span>
+          record{{ totalItems === 1 ? "" : "s" }}
         </div>
       </div>
 
-      <div class="rounded-xl bg-white p-5 shadow-soft">
+      <div *ngIf="isAdmin && summary" class="grid gap-3 md:grid-cols-5">
+        <div class="metric-card">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total</p>
+          <p class="mt-2 text-3xl font-bold text-slate-950">{{ summary.total }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending</p>
+          <p class="mt-2 text-3xl font-bold text-amber-600">{{ summary.pending }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Confirmed</p>
+          <p class="mt-2 text-3xl font-bold text-brand-700">{{ summary.confirmed }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed</p>
+          <p class="mt-2 text-3xl font-bold text-emerald-600">{{ summary.completed }}</p>
+        </div>
+        <div class="metric-card">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Cancelled</p>
+          <p class="mt-2 text-3xl font-bold text-red-600">{{ summary.cancelled }}</p>
+        </div>
+      </div>
+
+      <div class="surface p-6">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 class="text-2xl font-bold text-slate-800">
+            <h2 class="text-xl font-bold tracking-tight text-slate-950">
               {{ editingAppointment ? "Edit Appointment" : "Book Appointment" }}
-            </h1>
+            </h2>
             <p class="mt-1 text-sm text-slate-500">
               {{ editingAppointment ? "Update appointment details and attachment." : "Create and manage your appointment schedule." }}
             </p>
@@ -49,29 +65,29 @@ import { AuthService } from "../services/auth.service";
           <button
             *ngIf="editingAppointment"
             type="button"
-            class="rounded-lg border px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            class="btn-secondary"
             (click)="cancelEdit()"
           >
             Cancel Edit
           </button>
         </div>
 
-        <form class="mt-4 grid gap-3 md:grid-cols-2" [formGroup]="form" (ngSubmit)="save()">
+        <form class="mt-5 grid gap-4 md:grid-cols-2" [formGroup]="form" (ngSubmit)="save()">
           <label class="space-y-1">
-            <span class="text-sm text-slate-600">Full Name</span>
-            <input class="w-full rounded-lg border p-2" formControlName="fullName" />
+            <span class="field-label">Full Name</span>
+            <input class="field" formControlName="fullName" />
           </label>
           <label class="space-y-1">
-            <span class="text-sm text-slate-600">Email</span>
-            <input class="w-full rounded-lg border p-2" type="email" formControlName="email" />
+            <span class="field-label">Email</span>
+            <input class="field" type="email" formControlName="email" />
           </label>
           <label class="space-y-1">
-            <span class="text-sm text-slate-600">Phone Number</span>
-            <input class="w-full rounded-lg border p-2" formControlName="phone" />
+            <span class="field-label">Phone Number</span>
+            <input class="field" formControlName="phone" />
           </label>
           <label class="space-y-1">
-            <span class="text-sm text-slate-600">Service</span>
-            <select class="w-full rounded-lg border p-2" formControlName="serviceType">
+            <span class="field-label">Service</span>
+            <select class="field" formControlName="serviceType">
               <option value="">Select service</option>
               <option value="consultation">Consultation</option>
               <option value="follow_up">Follow Up</option>
@@ -80,13 +96,13 @@ import { AuthService } from "../services/auth.service";
             </select>
           </label>
           <label class="space-y-1">
-            <span class="text-sm text-slate-600">Appointment Date</span>
-            <input class="w-full rounded-lg border p-2" type="datetime-local" formControlName="appointmentDate" />
+            <span class="field-label">Appointment Date</span>
+            <input class="field" type="datetime-local" formControlName="appointmentDate" />
           </label>
           <label class="space-y-1">
-            <span class="text-sm text-slate-600">Attachment</span>
+            <span class="field-label">Attachment</span>
             <input
-              class="w-full rounded-lg border p-2"
+              class="field"
               type="file"
               accept=".png,.jpg,.jpeg,.pdf"
               [disabled]="uploading"
@@ -94,7 +110,7 @@ import { AuthService } from "../services/auth.service";
             />
           </label>
           <textarea
-            class="rounded-lg border p-2 md:col-span-2"
+            class="field md:col-span-2"
             rows="3"
             placeholder="Notes (optional)"
             formControlName="notes"
@@ -102,7 +118,7 @@ import { AuthService } from "../services/auth.service";
 
           <div class="flex flex-wrap items-center gap-3 md:col-span-2">
             <button
-              class="rounded-lg bg-brand-500 px-4 py-2 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              class="btn-primary"
               [disabled]="form.invalid || submitting || uploading"
             >
               {{ submitting ? "Saving..." : editingAppointment ? "Update Appointment" : "Create Appointment" }}
@@ -120,73 +136,73 @@ import { AuthService } from "../services/auth.service";
         </form>
       </div>
 
-      <div class="rounded-xl bg-white p-5 shadow-soft">
+      <div class="surface p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-slate-800">
+          <h2 class="text-xl font-bold tracking-tight text-slate-950">
             {{ isAdmin ? "All Appointments" : "My Appointments" }}
           </h2>
-          <p class="text-sm text-slate-500">{{ totalItems }} record{{ totalItems === 1 ? "" : "s" }}</p>
+          <p class="text-sm font-medium text-slate-500">{{ totalItems }} record{{ totalItems === 1 ? "" : "s" }}</p>
         </div>
 
-        <div class="mt-4 grid gap-2 md:grid-cols-6" [formGroup]="filterForm">
-          <input class="rounded-lg border p-2 md:col-span-2" placeholder="Search name/email/phone" formControlName="search" />
-          <select class="rounded-lg border p-2" formControlName="status">
+        <div class="mt-4 grid gap-3 md:grid-cols-6" [formGroup]="filterForm">
+          <input class="field md:col-span-2" placeholder="Search name/email/phone" formControlName="search" />
+          <select class="field" formControlName="status">
             <option value="">All status</option>
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
             <option value="cancelled">Cancelled</option>
             <option value="completed">Completed</option>
           </select>
-          <select class="rounded-lg border p-2" formControlName="serviceType">
+          <select class="field" formControlName="serviceType">
             <option value="">All services</option>
             <option value="consultation">Consultation</option>
             <option value="follow_up">Follow Up</option>
             <option value="therapy">Therapy</option>
             <option value="dental">Dental</option>
           </select>
-          <input class="rounded-lg border p-2" type="date" formControlName="from" />
-          <input class="rounded-lg border p-2" type="date" formControlName="to" />
+          <input class="field" type="date" formControlName="from" />
+          <input class="field" type="date" formControlName="to" />
         </div>
 
         <div class="mt-3 flex flex-wrap gap-2">
-          <button class="rounded-lg border border-brand-500 px-3 py-2 text-brand-700" (click)="load(1)">
+          <button class="btn-primary" (click)="load(1)">
             Apply Filters
           </button>
-          <button class="rounded-lg border px-3 py-2 text-slate-600" (click)="clearFilters()">
+          <button class="btn-secondary" (click)="clearFilters()">
             Clear
           </button>
         </div>
 
-        <p *ngIf="success" class="mt-3 rounded bg-emerald-50 p-2 text-sm text-emerald-700">{{ success }}</p>
-        <p *ngIf="error" class="mt-3 rounded bg-red-50 p-2 text-sm text-red-600">{{ error }}</p>
+        <p *ngIf="success" class="mt-3 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-700">{{ success }}</p>
+        <p *ngIf="error" class="mt-3 rounded-md border border-red-100 bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
         <p *ngIf="loading" class="mt-3 text-sm text-slate-500">Loading appointments...</p>
 
-        <div class="mt-4 overflow-x-auto">
-          <table class="min-w-full text-sm">
+        <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+          <table class="min-w-full bg-white text-sm">
             <thead>
-              <tr class="border-b bg-slate-50 text-left text-slate-600">
-                <th class="p-2">Client</th>
-                <th class="p-2">Service</th>
-                <th class="p-2">Schedule</th>
-                <th class="p-2">Status</th>
-                <th class="p-2">Notes</th>
-                <th class="p-2">Attachment</th>
-                <th class="p-2">Actions</th>
+              <tr class="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th class="px-4 py-3">Client</th>
+                <th class="px-4 py-3">Service</th>
+                <th class="px-4 py-3">Schedule</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Notes</th>
+                <th class="px-4 py-3">Attachment</th>
+                <th class="px-4 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr *ngFor="let item of appointments" class="border-b align-top">
-                <td class="p-2">
-                  <p class="font-medium text-slate-800">{{ item.fullName }}</p>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let item of appointments" class="align-top transition hover:bg-slate-50/80">
+                <td class="px-4 py-3">
+                  <p class="font-semibold text-slate-950">{{ item.fullName }}</p>
                   <p class="text-xs text-slate-500">{{ item.email }}</p>
                   <p class="text-xs text-slate-500">{{ item.phone }}</p>
                 </td>
-                <td class="p-2 capitalize">{{ item.serviceType.replace("_", " ") }}</td>
-                <td class="p-2">{{ item.appointmentDate | date: "medium" }}</td>
-                <td class="p-2">
+                <td class="px-4 py-3 capitalize text-slate-700">{{ item.serviceType.replace("_", " ") }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ item.appointmentDate | date: "medium" }}</td>
+                <td class="px-4 py-3">
                   <ng-container *ngIf="isAdmin; else userStatus">
                     <select
-                      class="rounded border p-1"
+                      class="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium capitalize text-slate-700 shadow-sm"
                       [value]="item.status"
                       (change)="changeStatus(item, $any($event.target).value)"
                     >
@@ -197,16 +213,16 @@ import { AuthService } from "../services/auth.service";
                     </select>
                   </ng-container>
                   <ng-template #userStatus>
-                    <span class="rounded-full bg-slate-100 px-2 py-1 text-xs capitalize text-slate-700">
+                    <span class="status-pill bg-slate-100 text-slate-700">
                       {{ item.status }}
                     </span>
                   </ng-template>
                 </td>
-                <td class="max-w-xs p-2 text-slate-600">{{ item.notes || "-" }}</td>
-                <td class="p-2">
+                <td class="max-w-xs px-4 py-3 text-slate-600">{{ item.notes || "-" }}</td>
+                <td class="px-4 py-3">
                   <a
                     *ngIf="item.attachmentUrl"
-                    class="text-brand-700 underline"
+                    class="font-semibold text-brand-700 hover:text-brand-900"
                     [href]="serverFileUrl(item.attachmentUrl)"
                     target="_blank"
                   >
@@ -214,13 +230,13 @@ import { AuthService } from "../services/auth.service";
                   </a>
                   <span *ngIf="!item.attachmentUrl">-</span>
                 </td>
-                <td class="space-x-3 p-2">
-                  <button class="text-brand-700 underline" (click)="startEdit(item)">Edit</button>
-                  <button class="text-red-600 underline" (click)="remove(item)">Delete</button>
+                <td class="space-x-3 px-4 py-3">
+                  <button class="font-semibold text-brand-700 hover:text-brand-900" (click)="startEdit(item)">Edit</button>
+                  <button class="font-semibold text-red-600 hover:text-red-700" (click)="remove(item)">Delete</button>
                 </td>
               </tr>
               <tr *ngIf="!loading && appointments.length === 0">
-                <td colspan="7" class="p-4 text-center text-slate-500">No appointments found.</td>
+                <td colspan="7" class="px-4 py-10 text-center text-slate-500">No appointments found.</td>
               </tr>
             </tbody>
           </table>
@@ -229,11 +245,11 @@ import { AuthService } from "../services/auth.service";
         <div class="mt-4 flex items-center justify-between">
           <p class="text-sm text-slate-500">Page {{ page }} of {{ totalPages }}</p>
           <div class="flex gap-2">
-            <button class="rounded border px-3 py-1" [disabled]="page <= 1" (click)="load(page - 1)">
+            <button class="btn-secondary px-3 py-1.5" [disabled]="page <= 1" (click)="load(page - 1)">
               Prev
             </button>
             <button
-              class="rounded border px-3 py-1"
+              class="btn-secondary px-3 py-1.5"
               [disabled]="page >= totalPages"
               (click)="load(page + 1)"
             >

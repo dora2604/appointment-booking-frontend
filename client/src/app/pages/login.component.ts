@@ -9,34 +9,59 @@ import { AuthService } from "../services/auth.service";
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <section class="mx-auto max-w-md rounded-xl bg-white p-6 shadow-soft">
-      <h1 class="mb-1 text-2xl font-bold text-slate-800">Login</h1>
-      <p class="mb-6 text-sm text-slate-500">Access your account to manage appointments.</p>
+    <section class="grid min-h-[calc(100vh-8rem)] items-center gap-8 lg:grid-cols-[1fr_460px]">
+      <div class="hidden max-w-xl lg:block">
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">Client Scheduling</p>
+        <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-950">Manage bookings with a calmer workflow.</h1>
+        <p class="mt-4 text-base leading-7 text-slate-600">
+          Track appointments, service requests, attachments, and status updates from one clean workspace.
+        </p>
+        <div class="mt-8 grid grid-cols-3 gap-3">
+          <div class="metric-card">
+            <p class="text-2xl font-bold text-brand-700">24/7</p>
+            <p class="mt-1 text-xs font-medium text-slate-500">Online booking</p>
+          </div>
+          <div class="metric-card">
+            <p class="text-2xl font-bold text-slate-900">Fast</p>
+            <p class="mt-1 text-xs font-medium text-slate-500">Status updates</p>
+          </div>
+          <div class="metric-card">
+            <p class="text-2xl font-bold text-accent-700">Secure</p>
+            <p class="mt-1 text-xs font-medium text-slate-500">Account access</p>
+          </div>
+        </div>
+      </div>
 
-      <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="surface mx-auto w-full max-w-md p-7">
+        <p class="mb-2 text-sm font-semibold text-brand-700">Welcome back</p>
+        <h2 class="text-2xl font-bold tracking-tight text-slate-950">Login to your account</h2>
+        <p class="mt-2 text-sm text-slate-500">Access your account to manage appointments.</p>
+
+      <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
         <div>
-          <label class="mb-1 block text-sm text-slate-600">Email</label>
-          <input formControlName="email" class="w-full rounded-lg border p-2" type="email" />
+          <label class="field-label">Email</label>
+          <input formControlName="email" class="field" type="email" autocomplete="email" />
         </div>
         <div>
-          <label class="mb-1 block text-sm text-slate-600">Password</label>
-          <input formControlName="password" class="w-full rounded-lg border p-2" type="password" />
+          <label class="field-label">Password</label>
+          <input formControlName="password" class="field" type="password" autocomplete="current-password" />
         </div>
 
-        <p *ngIf="error" class="rounded bg-red-50 p-2 text-sm text-red-600">{{ error }}</p>
+        <p *ngIf="error" class="rounded-md border border-red-100 bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
 
         <button
-          class="w-full rounded-lg bg-brand-500 p-2 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+          class="btn-primary w-full"
           [disabled]="form.invalid || loading"
         >
           {{ loading ? "Logging in..." : "Login" }}
         </button>
       </form>
 
-      <p class="mt-4 text-sm text-slate-600">
+      <p class="mt-5 text-center text-sm text-slate-600">
         No account yet?
-        <a routerLink="/register" class="text-brand-700 underline">Register</a>
+        <a routerLink="/register" class="font-semibold text-brand-700 hover:text-brand-900">Register</a>
       </p>
+      </div>
     </section>
   `
 })

@@ -8,46 +8,54 @@ import { AuthService } from "./services/auth.service";
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-slate-100">
-      <header class="border-b border-slate-200 bg-white/90 backdrop-blur-sm">
-        <nav class="mx-auto flex max-w-6xl items-center justify-between p-4">
-          <a routerLink="/" class="text-lg font-semibold text-brand-700">Appointment Booking</a>
-          <div class="flex items-center gap-3 text-sm">
+    <div class="app-shell">
+      <header class="topbar">
+        <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <a routerLink="/" class="flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-700 text-sm font-bold text-white shadow-sm">
+              AB
+            </span>
+            <span>
+              <span class="block text-base font-bold tracking-tight text-slate-950">Appointment Booking</span>
+              <span class="hidden text-xs font-medium text-slate-500 sm:block">Scheduling workspace</span>
+            </span>
+          </a>
+          <div class="flex items-center gap-2 text-sm">
             <a
               routerLink="/appointments"
-              routerLinkActive="text-brand-700 bg-brand-50"
+              routerLinkActive="nav-link-active"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+              class="nav-link"
               >Appointments</a
             >
             <a
               *ngIf="auth.currentUser?.role === 'admin'"
               routerLink="/admin"
-              routerLinkActive="text-brand-700 bg-brand-50"
+              routerLinkActive="nav-link-active"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+              class="nav-link"
               >Admin</a
             >
             <a
               *ngIf="!auth.isLoggedIn"
               routerLink="/login"
-              routerLinkActive="text-brand-700 bg-brand-50"
+              routerLinkActive="nav-link-active"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+              class="nav-link"
               >Login</a
             >
             <a
               *ngIf="!auth.isLoggedIn"
               routerLink="/register"
-              routerLinkActive="text-brand-700 bg-brand-50"
+              routerLinkActive="nav-link-active"
               [routerLinkActiveOptions]="{ exact: true }"
-              class="rounded px-3 py-2 text-slate-600 transition-colors duration-150 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+              class="nav-link"
               >Register</a
             >
             <button
               *ngIf="auth.isLoggedIn"
               type="button"
-              class="rounded bg-brand-500 px-3 py-2 text-white transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+              class="btn-primary px-3 py-2"
               (click)="logout()"
             >
               Logout
@@ -56,7 +64,7 @@ import { AuthService } from "./services/auth.service";
         </nav>
       </header>
 
-      <main class="mx-auto max-w-6xl p-4">
+      <main class="page-wrap">
         <router-outlet></router-outlet>
       </main>
     </div>
