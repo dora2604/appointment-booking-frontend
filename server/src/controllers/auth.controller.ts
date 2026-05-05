@@ -6,7 +6,7 @@ import { UserModel } from "../models/User";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { env } from "../config/env";
-import { isMongoConnected } from "../config/db";
+import { isMongoAvailable } from "../config/db";
 import { fileStore } from "../repositories/fileStore";
 
 const signToken = (user: { _id: string; email: string; role: "admin" | "user"; name: string }) => {
@@ -23,6 +23,89 @@ const signToken = (user: { _id: string; email: string; role: "admin" | "user"; n
   );
 };
 
+const withTimeout = async <T>(operation: Promise<T>, label: string, timeoutMs = 8000) => {
+  let timeout: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(`${label} timed out.`)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+};
+
+const registerWithFileStore = async (
+  name: string,
+  email: string,
+  password: string,
+  role?: "admin" | "user"
+) => {
+  const existing = fileStore.findUserByEmail(email);
+  if (existing) {
+    throw new ApiError(409, "Email is already registered.");
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+  const user = fileStore.createUser({
+    name,
+    email,
+    password: hashed,
+    role: role ?? "user"
+  });
+  const token = signToken({
+    _id: user._id,
+    email: user.email,
+    role: user.role,
+    name: user.name
+  });
+
+  return {
+    message: "Registration successful.",
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  };
+};
+
+const loginWithFileStore = async (email: string, password: string) => {
+  const user = fileStore.findUserByEmail(email);
+  if (!user) {
+    throw new ApiError(401, "Invalid email or password.");
+  }
+
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) {
+    throw new ApiError(401, "Invalid email or password.");
+  }
+
+  const token = signToken({
+    _id: user._id,
+    email: user.email,
+    role: user.role,
+    name: user.name
+  });
+
+  return {
+    message: "Login successful.",
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  };
+};
+
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password, role } = req.body as {
     name: string;
@@ -31,21 +114,29 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     role?: "admin" | "user";
   };
 
-  if (!isMongoConnected) {
-    const existing = fileStore.findUserByEmail(email);
+  if (!isMongoAvailable()) {
+    return res.status(201).json(await registerWithFileStore(name, email, password, role));
+  }
+
+  try {
+    const existing = await withTimeout(UserModel.findOne({ email }).exec(), "Find user");
     if (existing) {
       throw new ApiError(409, "Email is already registered.");
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = fileStore.createUser({
-      name,
-      email,
-      password: hashed,
-      role: role ?? "user"
-    });
+    const user = await withTimeout(
+      UserModel.create({
+        name,
+        email,
+        password: hashed,
+        role: role ?? "user"
+      }),
+      "Create user"
+    );
+
     const token = signToken({
-      _id: user._id,
+      _id: user._id.toString(),
       email: user.email,
       role: user.role,
       name: user.name
@@ -61,45 +152,25 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
         role: user.role
       }
     });
-  }
-
-  const existing = await UserModel.findOne({ email });
-  if (existing) {
-    throw new ApiError(409, "Email is already registered.");
-  }
-
-  const hashed = await bcrypt.hash(password, 10);
-  const user = await UserModel.create({
-    name,
-    email,
-    password: hashed,
-    role: role ?? "user"
-  });
-
-  const token = signToken({
-    _id: user._id.toString(),
-    email: user.email,
-    role: user.role,
-    name: user.name
-  });
-
-  res.status(201).json({
-    message: "Registration successful.",
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
     }
-  });
+    // eslint-disable-next-line no-console
+    console.warn("MongoDB auth register unavailable. Falling back to local JSON storage.", error);
+    return res.status(201).json(await registerWithFileStore(name, email, password, role));
+  }
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as { email: string; password: string };
 
-  if (!isMongoConnected) {
-    const user = fileStore.findUserByEmail(email);
+  if (!isMongoAvailable()) {
+    return res.status(200).json(await loginWithFileStore(email, password));
+  }
+
+  try {
+    const user = await withTimeout(UserModel.findOne({ email }).exec(), "Find user");
     if (!user) {
       throw new ApiError(401, "Invalid email or password.");
     }
@@ -110,7 +181,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const token = signToken({
-      _id: user._id,
+      _id: user._id.toString(),
       email: user.email,
       role: user.role,
       name: user.name
@@ -126,35 +197,14 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         role: user.role
       }
     });
-  }
-
-  const user = await UserModel.findOne({ email });
-  if (!user) {
-    throw new ApiError(401, "Invalid email or password.");
-  }
-
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) {
-    throw new ApiError(401, "Invalid email or password.");
-  }
-
-  const token = signToken({
-    _id: user._id.toString(),
-    email: user.email,
-    role: user.role,
-    name: user.name
-  });
-
-  res.status(200).json({
-    message: "Login successful.",
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
     }
-  });
+    // eslint-disable-next-line no-console
+    console.warn("MongoDB auth login unavailable. Falling back to local JSON storage.", error);
+    return res.status(200).json(await loginWithFileStore(email, password));
+  }
 });
 
 export const me = asyncHandler(async (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, tap } from "rxjs";
+import { BehaviorSubject, Observable, tap, timeout } from "rxjs";
 
 import { ApiService } from "./api.service";
 import { AuthResponse, User } from "../models/auth.model";
@@ -40,13 +40,13 @@ export class AuthService {
   register(payload: RegisterInput): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.api.baseUrl}/auth/register`, payload)
-      .pipe(tap((response) => this.persistAuth(response)));
+      .pipe(timeout(15000), tap((response) => this.persistAuth(response)));
   }
 
   login(payload: Credentials): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.api.baseUrl}/auth/login`, payload)
-      .pipe(tap((response) => this.persistAuth(response)));
+      .pipe(timeout(15000), tap((response) => this.persistAuth(response)));
   }
 
   logout() {
