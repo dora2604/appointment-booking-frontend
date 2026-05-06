@@ -23,6 +23,12 @@ const signToken = (user: { _id: string; email: string; role: "admin" | "user"; n
   );
 };
 
+const ensureDemoStorageEnabled = () => {
+  if (!env.ALLOW_DEMO_STORAGE) {
+    throw new ApiError(503, "Database is unavailable. Please try again later.");
+  }
+};
+
 const withTimeout = async <T>(operation: Promise<T>, label: string, timeoutMs = 8000) => {
   let timeout: NodeJS.Timeout | undefined;
   try {
@@ -115,6 +121,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   };
 
   if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     return res.status(201).json(await registerWithFileStore(name, email, password, role));
   }
 
@@ -156,6 +163,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     if (error instanceof ApiError) {
       throw error;
     }
+    ensureDemoStorageEnabled();
     // eslint-disable-next-line no-console
     console.warn("MongoDB auth register unavailable. Falling back to local JSON storage.", error);
     return res.status(201).json(await registerWithFileStore(name, email, password, role));
@@ -166,6 +174,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as { email: string; password: string };
 
   if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     return res.status(200).json(await loginWithFileStore(email, password));
   }
 
@@ -201,6 +210,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     if (error instanceof ApiError) {
       throw error;
     }
+    ensureDemoStorageEnabled();
     // eslint-disable-next-line no-console
     console.warn("MongoDB auth login unavailable. Falling back to local JSON storage.", error);
     return res.status(200).json(await loginWithFileStore(email, password));

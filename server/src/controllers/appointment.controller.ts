@@ -4,8 +4,15 @@ import { FilterQuery } from "mongoose";
 import { AppointmentModel, IAppointment } from "../models/Appointment";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
-import { isMongoConnected } from "../config/db";
+import { isMongoAvailable } from "../config/db";
+import { env } from "../config/env";
 import { fileStore, StoredAppointment } from "../repositories/fileStore";
+
+const ensureDemoStorageEnabled = () => {
+  if (!env.ALLOW_DEMO_STORAGE) {
+    throw new ApiError(503, "Database is unavailable. Please try again later.");
+  }
+};
 
 export const createAppointment = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
@@ -14,7 +21,8 @@ export const createAppointment = asyncHandler(async (req: Request, res: Response
 
   const payload = req.body as Partial<IAppointment>;
 
-  if (!isMongoConnected) {
+  if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     const created = fileStore.createAppointment({
       ...(payload as Partial<StoredAppointment>),
       userId: req.user.id,
@@ -54,7 +62,8 @@ export const getAppointments = asyncHandler(async (req: Request, res: Response) 
   const sortBy = String(req.query.sortBy ?? "appointmentDate");
   const order = String(req.query.order ?? "asc") === "desc" ? -1 : 1;
 
-  if (!isMongoConnected) {
+  if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     const result = fileStore.listAppointments({
       userId: req.user.role === "admin" ? undefined : req.user.id,
       search,
@@ -126,7 +135,8 @@ export const getAppointmentById = asyncHandler(async (req: Request, res: Respons
     throw new ApiError(401, "Unauthorized.");
   }
 
-  if (!isMongoConnected) {
+  if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     const appointment = fileStore.findAppointmentById(req.params.id);
     if (!appointment) {
       throw new ApiError(404, "Appointment not found.");
@@ -152,7 +162,8 @@ export const updateAppointment = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, "Unauthorized.");
   }
 
-  if (!isMongoConnected) {
+  if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     const appointment = fileStore.findAppointmentById(req.params.id);
     if (!appointment) {
       throw new ApiError(404, "Appointment not found.");
@@ -204,7 +215,8 @@ export const deleteAppointment = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, "Unauthorized.");
   }
 
-  if (!isMongoConnected) {
+  if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     const appointment = fileStore.findAppointmentById(req.params.id);
     if (!appointment) {
       throw new ApiError(404, "Appointment not found.");
@@ -232,7 +244,8 @@ export const deleteAppointment = asyncHandler(async (req: Request, res: Response
 });
 
 export const adminSummary = asyncHandler(async (_req: Request, res: Response) => {
-  if (!isMongoConnected) {
+  if (!isMongoAvailable()) {
+    ensureDemoStorageEnabled();
     return res.status(200).json(fileStore.appointmentSummary());
   }
 

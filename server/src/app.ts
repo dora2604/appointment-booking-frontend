@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 
 import { env } from "./config/env";
-import { isMongoConnected } from "./config/db";
+import { isMongoAvailable } from "./config/db";
 import { authRoutes } from "./routes/auth.routes";
 import { appointmentRoutes } from "./routes/appointment.routes";
 import { uploadRoutes } from "./routes/upload.routes";
@@ -58,7 +58,7 @@ app.get("/api/health", (_req, res) => {
   res.status(200).json({
     ok: true,
     message: "Appointment API is healthy.",
-    storage: isMongoConnected ? "mongodb" : "local-json-demo"
+    storage: isMongoAvailable() ? "mongodb" : env.ALLOW_DEMO_STORAGE ? "local-json-demo" : "unavailable"
   });
 });
 
