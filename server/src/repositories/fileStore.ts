@@ -100,8 +100,7 @@ export const fileStore = {
     search?: string;
     status?: string;
     serviceType?: string;
-    from?: string;
-    to?: string;
+    appointmentDate?: string;
     page: number;
     limit: number;
     sortBy: string;
@@ -125,13 +124,13 @@ export const fileStore = {
     if (options.serviceType) {
       items = items.filter((item) => item.serviceType === options.serviceType);
     }
-    if (options.from) {
-      const fromTime = new Date(options.from).getTime();
-      items = items.filter((item) => new Date(item.appointmentDate).getTime() >= fromTime);
-    }
-    if (options.to) {
-      const toTime = new Date(options.to).getTime();
-      items = items.filter((item) => new Date(item.appointmentDate).getTime() <= toTime);
+    if (options.appointmentDate) {
+      const selectedTime = new Date(options.appointmentDate).getTime();
+      const nextMinuteTime = selectedTime + 60000;
+      items = items.filter((item) => {
+        const itemTime = new Date(item.appointmentDate).getTime();
+        return itemTime >= selectedTime && itemTime < nextMinuteTime;
+      });
     }
 
     items.sort((a, b) => {

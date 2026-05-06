@@ -11,8 +11,7 @@ export interface AppointmentQuery {
   search?: string;
   status?: string;
   serviceType?: string;
-  from?: string;
-  to?: string;
+  appointmentDate?: string;
   sortBy?: string;
   order?: "asc" | "desc";
 }

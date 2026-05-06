@@ -160,13 +160,9 @@ import { AuthService } from "../services/auth.service";
             <option value="therapy">Therapy</option>
             <option value="dental">Dental</option>
           </select>
-          <label class="space-y-1">
-            <span class="field-label">From Date</span>
-            <input class="field" type="date" formControlName="from" />
-          </label>
-          <label class="space-y-1">
-            <span class="field-label">To Date</span>
-            <input class="field" type="date" formControlName="to" />
+          <label class="space-y-1 md:col-span-2">
+            <span class="field-label">Appointment Date & Time</span>
+            <input class="field" type="datetime-local" formControlName="appointmentDate" />
           </label>
         </div>
 
@@ -306,8 +302,7 @@ export class AppointmentsComponent implements OnInit {
     search: [""],
     status: [""],
     serviceType: [""],
-    from: [""],
-    to: [""]
+    appointmentDate: [""]
   });
 
   ngOnInit(): void {
@@ -328,8 +323,7 @@ export class AppointmentsComponent implements OnInit {
         search: values.search,
         status: values.status,
         serviceType: values.serviceType,
-        from: values.from,
-        to: values.to,
+        appointmentDate: this.toIsoOrEmpty(values.appointmentDate),
         sortBy: "appointmentDate",
         order: "asc"
       })
@@ -516,6 +510,10 @@ export class AppointmentsComponent implements OnInit {
     const date = new Date(value);
     const offset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  }
+
+  private toIsoOrEmpty(value: string): string {
+    return value ? new Date(value).toISOString() : "";
   }
 
   private clearMessages() {

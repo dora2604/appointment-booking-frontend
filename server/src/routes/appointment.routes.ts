@@ -47,8 +47,7 @@ appointmentRoutes.get(
     query("limit").optional().isInt({ min: 1, max: 50 }),
     query("status").optional().isIn(["pending", "confirmed", "cancelled", "completed"]),
     query("serviceType").optional().isIn(["consultation", "follow_up", "therapy", "dental"]),
-    query("from").optional().isISO8601(),
-    query("to").optional().isISO8601(),
+    query("appointmentDate").optional().isISO8601(),
     query("search").optional().trim().escape()
   ],
   validateRequest,

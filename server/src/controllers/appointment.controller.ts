@@ -50,8 +50,7 @@ export const getAppointments = asyncHandler(async (req: Request, res: Response) 
   const search = String(req.query.search ?? "").trim();
   const status = String(req.query.status ?? "").trim();
   const serviceType = String(req.query.serviceType ?? "").trim();
-  const from = String(req.query.from ?? "").trim();
-  const to = String(req.query.to ?? "").trim();
+  const appointmentDate = String(req.query.appointmentDate ?? "").trim();
   const sortBy = String(req.query.sortBy ?? "appointmentDate");
   const order = String(req.query.order ?? "asc") === "desc" ? -1 : 1;
 
@@ -61,8 +60,7 @@ export const getAppointments = asyncHandler(async (req: Request, res: Response) 
       search,
       status,
       serviceType,
-      from,
-      to,
+      appointmentDate,
       page,
       limit,
       sortBy,
@@ -98,14 +96,13 @@ export const getAppointments = asyncHandler(async (req: Request, res: Response) 
   if (serviceType) {
     query.serviceType = serviceType as IAppointment["serviceType"];
   }
-  if (from || to) {
-    query.appointmentDate = {};
-    if (from) {
-      query.appointmentDate.$gte = new Date(from);
-    }
-    if (to) {
-      query.appointmentDate.$lte = new Date(to);
-    }
+  if (appointmentDate) {
+    const selected = new Date(appointmentDate);
+    const nextMinute = new Date(selected.getTime() + 60000);
+    query.appointmentDate = {
+      $gte: selected,
+      $lt: nextMinute
+    };
   }
 
   const [items, total] = await Promise.all([
