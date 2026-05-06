@@ -46,6 +46,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     tags: [Health]
+ *     summary: Root API status
+ *     responses:
+ *       200:
+ *         description: API root status response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 health:
+ *                   type: string
+ */
 app.get("/", (_req, res) => {
   res.status(200).json({
     ok: true,
@@ -54,6 +75,20 @@ app.get("/", (_req, res) => {
   });
 });
 
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     tags: [Health]
+ *     summary: Health check
+ *     responses:
+ *       200:
+ *         description: API health status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ */
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
     ok: true,
