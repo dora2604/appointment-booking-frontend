@@ -1,35 +1,11 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-
-export type StoredUser = {
-  _id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: "admin" | "user";
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type StoredAppointment = {
-  _id: string;
-  userId: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  serviceType: "consultation" | "follow_up" | "therapy" | "dental";
-  appointmentDate: string;
-  notes?: string;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
-  attachmentUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { AppointmentRecord, UserRecord } from "../types/data";
 
 type StoreData = {
-  users: StoredUser[];
-  appointments: StoredAppointment[];
+  users: UserRecord[];
+  appointments: AppointmentRecord[];
 };
 
 const dataDir = path.join(process.cwd(), "data");
@@ -65,10 +41,10 @@ export const fileStore = {
     return data.users.find((user) => user.email.toLowerCase() === email.toLowerCase()) ?? null;
   },
 
-  createUser(input: Pick<StoredUser, "name" | "email" | "password" | "role">) {
+  createUser(input: Pick<UserRecord, "name" | "email" | "password" | "role">) {
     const data = readStore();
     const now = new Date().toISOString();
-    const user: StoredUser = {
+    const user: UserRecord = {
       _id: createId(),
       ...input,
       email: input.email.toLowerCase(),
@@ -80,10 +56,10 @@ export const fileStore = {
     return user;
   },
 
-  createAppointment(input: Omit<StoredAppointment, "_id" | "createdAt" | "updatedAt">) {
+  createAppointment(input: Omit<AppointmentRecord, "_id" | "createdAt" | "updatedAt">) {
     const data = readStore();
     const now = new Date().toISOString();
-    const appointment: StoredAppointment = {
+    const appointment: AppointmentRecord = {
       _id: createId(),
       ...input,
       appointmentDate: new Date(input.appointmentDate).toISOString(),
@@ -134,8 +110,8 @@ export const fileStore = {
     }
 
     items.sort((a, b) => {
-      const aValue = String(a[options.sortBy as keyof StoredAppointment] ?? "");
-      const bValue = String(b[options.sortBy as keyof StoredAppointment] ?? "");
+      const aValue = String(a[options.sortBy as keyof AppointmentRecord] ?? "");
+      const bValue = String(b[options.sortBy as keyof AppointmentRecord] ?? "");
       return aValue.localeCompare(bValue) * options.order;
     });
 
@@ -152,7 +128,7 @@ export const fileStore = {
     return data.appointments.find((appointment) => appointment._id === id) ?? null;
   },
 
-  updateAppointment(id: string, input: Partial<StoredAppointment>) {
+  updateAppointment(id: string, input: Partial<AppointmentRecord>) {
     const data = readStore();
     const index = data.appointments.findIndex((appointment) => appointment._id === id);
     if (index === -1) {

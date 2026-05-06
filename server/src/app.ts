@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 
 import { env } from "./config/env";
-import { getMongoDiagnostics, isMongoAvailable } from "./config/db";
+import { getDatabaseDiagnostics, isSupabaseAvailable } from "./config/db";
 import { authRoutes } from "./routes/auth.routes";
 import { appointmentRoutes } from "./routes/appointment.routes";
 import { uploadRoutes } from "./routes/upload.routes";
@@ -129,12 +129,12 @@ app.get("/", (_req, res) => {
  *               $ref: '#/components/schemas/HealthResponse'
  */
 app.get("/api/health", (_req, res) => {
-  const mongo = getMongoDiagnostics();
+  const database = getDatabaseDiagnostics();
   res.status(200).json({
     ok: true,
     message: "Appointment API is healthy.",
-    storage: isMongoAvailable() ? "mongodb" : env.ALLOW_DEMO_STORAGE ? "local-json-demo" : "unavailable",
-    mongoState: mongo.readyState
+    storage: isSupabaseAvailable() ? "supabase" : env.ALLOW_DEMO_STORAGE ? "local-json-demo" : "unavailable",
+    databaseState: database.readyState
   });
 });
 

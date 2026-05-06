@@ -1,0 +1,54 @@
+create extension if not exists pgcrypto;
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = timezone('utc', now());
+  return new;
+end;
+$$;
+
+create table if not exists public.users (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(trim(name)) >= 2),
+  email text not null unique,
+  password text not null,
+  role text not null default 'user' check (role in ('admin', 'user')),
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.appointments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  full_name text not null check (char_length(trim(full_name)) >= 2),
+  email text not null,
+  phone text not null,
+  service_type text not null check (service_type in ('consultation', 'follow_up', 'therapy', 'dental')),
+  appointment_date timestamptz not null,
+  notes text,
+  status text not null default 'pending' check (status in ('pending', 'confirmed', 'cancelled', 'completed')),
+  attachment_url text,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists idx_users_email on public.users (email);
+create index if not exists idx_appointments_user_id on public.appointments (user_id);
+create index if not exists idx_appointments_status on public.appointments (status);
+create index if not exists idx_appointments_service_type on public.appointments (service_type);
+create index if not exists idx_appointments_appointment_date on public.appointments (appointment_date);
+
+drop trigger if exists set_users_updated_at on public.users;
+create trigger set_users_updated_at
+before update on public.users
+for each row
+execute procedure public.set_updated_at();
+
+drop trigger if exists set_appointments_updated_at on public.appointments;
+create trigger set_appointments_updated_at
+before update on public.appointments
+for each row
+execute procedure public.set_updated_at();

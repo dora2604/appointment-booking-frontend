@@ -2,14 +2,15 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-import { UserModel } from "../models/User";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { env } from "../config/env";
-import { isMongoAvailable } from "../config/db";
+import { isSupabaseAvailable } from "../config/db";
 import { fileStore } from "../repositories/fileStore";
+import { supabaseStore } from "../repositories/supabaseStore";
+import { UserRole } from "../types/data";
 
-const signToken = (user: { _id: string; email: string; role: "admin" | "user"; name: string }) => {
+const signToken = (user: { _id: string; email: string; role: UserRole; name: string }) => {
   const expiresIn = env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"];
   return jwt.sign(
     {
@@ -49,7 +50,7 @@ const registerWithFileStore = async (
   name: string,
   email: string,
   password: string,
-  role?: "admin" | "user"
+  role?: UserRole
 ) => {
   const existing = fileStore.findUserByEmail(email);
   if (existing) {
@@ -120,20 +121,20 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     role?: "admin" | "user";
   };
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     return res.status(201).json(await registerWithFileStore(name, email, password, role));
   }
 
   try {
-    const existing = await withTimeout(UserModel.findOne({ email }).exec(), "Find user");
+    const existing = await withTimeout(supabaseStore.findUserByEmail(email), "Find user");
     if (existing) {
       throw new ApiError(409, "Email is already registered.");
     }
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await withTimeout(
-      UserModel.create({
+      supabaseStore.createUser({
         name,
         email,
         password: hashed,
@@ -143,7 +144,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     );
 
     const token = signToken({
-      _id: user._id.toString(),
+      _id: user._id,
       email: user.email,
       role: user.role,
       name: user.name
@@ -165,7 +166,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     }
     ensureDemoStorageEnabled();
     // eslint-disable-next-line no-console
-    console.warn("MongoDB auth register unavailable. Falling back to local JSON storage.", error);
+    console.warn("Supabase auth register unavailable. Falling back to local JSON storage.", error);
     return res.status(201).json(await registerWithFileStore(name, email, password, role));
   }
 });
@@ -173,13 +174,13 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as { email: string; password: string };
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     return res.status(200).json(await loginWithFileStore(email, password));
   }
 
   try {
-    const user = await withTimeout(UserModel.findOne({ email }).exec(), "Find user");
+    const user = await withTimeout(supabaseStore.findUserByEmail(email), "Find user");
     if (!user) {
       throw new ApiError(401, "Invalid email or password.");
     }
@@ -190,7 +191,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const token = signToken({
-      _id: user._id.toString(),
+      _id: user._id,
       email: user.email,
       role: user.role,
       name: user.name
@@ -212,7 +213,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     }
     ensureDemoStorageEnabled();
     // eslint-disable-next-line no-console
-    console.warn("MongoDB auth login unavailable. Falling back to local JSON storage.", error);
+    console.warn("Supabase auth login unavailable. Falling back to local JSON storage.", error);
     return res.status(200).json(await loginWithFileStore(email, password));
   }
 });

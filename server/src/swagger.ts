@@ -41,7 +41,7 @@ const options: swaggerJsDoc.Options = {
         User: {
           type: "object",
           properties: {
-            id: { type: "string", example: "6811c683cf544cc99e147ad4" },
+            id: { type: "string", example: "2f4636dc-9932-4a73-af89-3503b539b557" },
             name: { type: "string", example: "Jane Doe" },
             email: { type: "string", example: "jane@example.com" },
             role: { type: "string", enum: ["admin", "user"], example: "user" }
@@ -76,8 +76,8 @@ const options: swaggerJsDoc.Options = {
         Appointment: {
           type: "object",
           properties: {
-            _id: { type: "string", example: "6811c683cf544cc99e147ad4" },
-            userId: { type: "string", example: "6811c683cf544cc99e147ad1" },
+            _id: { type: "string", example: "4d79078f-a4cc-4fa0-8d0c-86d20366c283" },
+            userId: { type: "string", example: "2f4636dc-9932-4a73-af89-3503b539b557" },
             fullName: { type: "string", example: "Jane Doe" },
             email: { type: "string", example: "jane@example.com" },
             phone: { type: "string", example: "09123456789" },
@@ -191,7 +191,8 @@ const options: swaggerJsDoc.Options = {
           properties: {
             ok: { type: "boolean", example: true },
             message: { type: "string", example: "Appointment API is healthy." },
-            storage: { type: "string", example: "mongodb" }
+            storage: { type: "string", example: "supabase" },
+            databaseState: { type: "integer", example: 1 }
           }
         }
       }

@@ -151,7 +151,7 @@ appointmentRoutes.get("/admin/summary", authorize("admin"), adminSummary);
  *                 appointment:
  *                   $ref: '#/components/schemas/Appointment'
  */
-appointmentRoutes.get("/:id", [param("id").isMongoId()], validateRequest, getAppointmentById);
+appointmentRoutes.get("/:id", [param("id").isUUID()], validateRequest, getAppointmentById);
 
 /**
  * @openapi
@@ -184,7 +184,7 @@ appointmentRoutes.get("/:id", [param("id").isMongoId()], validateRequest, getApp
 appointmentRoutes.put(
   "/:id",
   [
-    param("id").isMongoId(),
+    param("id").isUUID(),
     body("fullName").optional().trim().isLength({ min: 2 }).escape(),
     body("email").optional().trim().isEmail().normalizeEmail(),
     body("phone").optional().trim().isLength({ min: 7, max: 20 }).escape(),
@@ -223,4 +223,4 @@ appointmentRoutes.put(
  *                 message:
  *                   type: string
  */
-appointmentRoutes.delete("/:id", [param("id").isMongoId()], validateRequest, deleteAppointment);
+appointmentRoutes.delete("/:id", [param("id").isUUID()], validateRequest, deleteAppointment);

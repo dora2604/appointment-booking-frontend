@@ -4,12 +4,12 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm run build
-
-    startCommand: npm start
+    buildCommand: cd server && npm run build
+    startCommand: cd server && npm start
 
     # Set these environment variables in the Render dashboard:
-    #   MONGO_URI
+    #   SUPABASE_URL
+    #   SUPABASE_SERVICE_ROLE_KEY
     #   JWT_SECRET
     #   JWT_EXPIRES_IN
     #   CLIENT_ORIGIN
@@ -21,4 +21,4 @@ services:
     region: oregon
     plan: free
     buildCommand: cd client && npm install && npm run build
-    publishPath: client/dist/appointment-booking-client
+    publishPath: client/dist/appointment-booking-client/browser

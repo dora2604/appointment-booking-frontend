@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
-import { FilterQuery } from "mongoose";
-
-import { AppointmentModel, IAppointment } from "../models/Appointment";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
-import { isMongoAvailable } from "../config/db";
+import { isSupabaseAvailable } from "../config/db";
 import { env } from "../config/env";
-import { fileStore, StoredAppointment } from "../repositories/fileStore";
+import { fileStore } from "../repositories/fileStore";
+import { supabaseStore } from "../repositories/supabaseStore";
+import { AppointmentRecord } from "../types/data";
 
 const ensureDemoStorageEnabled = () => {
   if (!env.ALLOW_DEMO_STORAGE) {
@@ -15,7 +14,7 @@ const ensureDemoStorageEnabled = () => {
 };
 
 const pickAppointmentPayload = (
-  payload: Partial<IAppointment | StoredAppointment>,
+  payload: Partial<AppointmentRecord>,
   options?: { allowStatus?: boolean }
 ) => {
   const nextPayload: Record<string, unknown> = {};
@@ -37,15 +36,15 @@ export const createAppointment = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, "Unauthorized.");
   }
 
-  const payload = pickAppointmentPayload(req.body as Partial<IAppointment>);
+  const payload = pickAppointmentPayload(req.body as Partial<AppointmentRecord>);
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     const created = fileStore.createAppointment({
-      ...(payload as Partial<StoredAppointment>),
+      ...(payload as Partial<AppointmentRecord>),
       userId: req.user.id,
       status: "pending"
-    } as StoredAppointment);
+    } as Omit<AppointmentRecord, "_id" | "createdAt" | "updatedAt">);
 
     return res.status(201).json({
       message: "Appointment booked successfully.",
@@ -53,8 +52,8 @@ export const createAppointment = asyncHandler(async (req: Request, res: Response
     });
   }
 
-  const created = await AppointmentModel.create({
-    ...payload,
+  const created = await supabaseStore.createAppointment({
+    ...(payload as Omit<AppointmentRecord, "_id" | "createdAt" | "updatedAt">),
     userId: req.user.id,
     status: "pending"
   });
@@ -80,7 +79,7 @@ export const getAppointments = asyncHandler(async (req: Request, res: Response) 
   const sortBy = String(req.query.sortBy ?? "appointmentDate");
   const order = String(req.query.order ?? "asc") === "desc" ? -1 : 1;
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     const result = fileStore.listAppointments({
       userId: req.user.role === "admin" ? undefined : req.user.id,
@@ -105,45 +104,25 @@ export const getAppointments = asyncHandler(async (req: Request, res: Response) 
     });
   }
 
-  const query: FilterQuery<IAppointment> = {};
-
-  if (req.user.role !== "admin") {
-    query.userId = req.user.id;
-  }
-  if (search) {
-    query.$or = [
-      { fullName: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-      { phone: { $regex: search, $options: "i" } }
-    ];
-  }
-  if (status) {
-    query.status = status as IAppointment["status"];
-  }
-  if (serviceType) {
-    query.serviceType = serviceType as IAppointment["serviceType"];
-  }
-  if (appointmentDate) {
-    const selected = new Date(appointmentDate);
-    const nextMinute = new Date(selected.getTime() + 60000);
-    query.appointmentDate = {
-      $gte: selected,
-      $lt: nextMinute
-    };
-  }
-
-  const [items, total] = await Promise.all([
-    AppointmentModel.find(query).sort({ [sortBy]: order }).skip(skip).limit(limit),
-    AppointmentModel.countDocuments(query)
-  ]);
+  const result = await supabaseStore.listAppointments({
+    userId: req.user.role === "admin" ? undefined : req.user.id,
+    search,
+    status,
+    serviceType,
+    appointmentDate,
+    page,
+    limit,
+    sortBy,
+    order
+  });
 
   res.status(200).json({
-    items,
+    items: result.items,
     pagination: {
       page,
       limit,
-      total,
-      totalPages: Math.ceil(total / limit)
+      total: result.total,
+      totalPages: Math.ceil(result.total / limit)
     }
   });
 });
@@ -153,7 +132,7 @@ export const getAppointmentById = asyncHandler(async (req: Request, res: Respons
     throw new ApiError(401, "Unauthorized.");
   }
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     const appointment = fileStore.findAppointmentById(req.params.id);
     if (!appointment) {
@@ -165,11 +144,11 @@ export const getAppointmentById = asyncHandler(async (req: Request, res: Respons
     return res.status(200).json({ appointment });
   }
 
-  const appointment = await AppointmentModel.findById(req.params.id);
+  const appointment = await supabaseStore.findAppointmentById(req.params.id);
   if (!appointment) {
     throw new ApiError(404, "Appointment not found.");
   }
-  if (req.user.role !== "admin" && String(appointment.userId) !== String(req.user.id)) {
+  if (req.user.role !== "admin" && appointment.userId !== req.user.id) {
     throw new ApiError(403, "Forbidden.");
   }
   res.status(200).json({ appointment });
@@ -180,7 +159,7 @@ export const updateAppointment = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, "Unauthorized.");
   }
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     const appointment = fileStore.findAppointmentById(req.params.id);
     if (!appointment) {
@@ -191,9 +170,9 @@ export const updateAppointment = asyncHandler(async (req: Request, res: Response
       throw new ApiError(403, "Forbidden.");
     }
 
-    const payload = pickAppointmentPayload(req.body as Partial<StoredAppointment>, {
+    const payload = pickAppointmentPayload(req.body as Partial<AppointmentRecord>, {
       allowStatus: req.user.role === "admin"
-    }) as Partial<StoredAppointment>;
+    }) as Partial<AppointmentRecord>;
 
     const updated = fileStore.updateAppointment(req.params.id, payload);
     return res.status(200).json({
@@ -202,25 +181,24 @@ export const updateAppointment = asyncHandler(async (req: Request, res: Response
     });
   }
 
-  const appointment = await AppointmentModel.findById(req.params.id);
+  const appointment = await supabaseStore.findAppointmentById(req.params.id);
   if (!appointment) {
     throw new ApiError(404, "Appointment not found.");
   }
 
-  if (req.user.role !== "admin" && String(appointment.userId) !== String(req.user.id)) {
+  if (req.user.role !== "admin" && appointment.userId !== req.user.id) {
     throw new ApiError(403, "Forbidden.");
   }
 
-  const payload = pickAppointmentPayload(req.body as Partial<IAppointment>, {
+  const payload = pickAppointmentPayload(req.body as Partial<AppointmentRecord>, {
     allowStatus: req.user.role === "admin"
   });
 
-  Object.assign(appointment, payload);
-  await appointment.save();
+  const updated = await supabaseStore.updateAppointment(req.params.id, payload);
 
   res.status(200).json({
     message: "Appointment updated successfully.",
-    appointment
+    appointment: updated
   });
 });
 
@@ -229,7 +207,7 @@ export const deleteAppointment = asyncHandler(async (req: Request, res: Response
     throw new ApiError(401, "Unauthorized.");
   }
 
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     const appointment = fileStore.findAppointmentById(req.params.id);
     if (!appointment) {
@@ -244,38 +222,24 @@ export const deleteAppointment = asyncHandler(async (req: Request, res: Response
     return res.status(200).json({ message: "Appointment deleted successfully." });
   }
 
-  const appointment = await AppointmentModel.findById(req.params.id);
+  const appointment = await supabaseStore.findAppointmentById(req.params.id);
   if (!appointment) {
     throw new ApiError(404, "Appointment not found.");
   }
 
-  if (req.user.role !== "admin" && String(appointment.userId) !== String(req.user.id)) {
+  if (req.user.role !== "admin" && appointment.userId !== req.user.id) {
     throw new ApiError(403, "Forbidden.");
   }
 
-  await appointment.deleteOne();
+  await supabaseStore.deleteAppointment(req.params.id);
   res.status(200).json({ message: "Appointment deleted successfully." });
 });
 
 export const adminSummary = asyncHandler(async (_req: Request, res: Response) => {
-  if (!isMongoAvailable()) {
+  if (!isSupabaseAvailable()) {
     ensureDemoStorageEnabled();
     return res.status(200).json(fileStore.appointmentSummary());
   }
 
-  const [total, pending, confirmed, cancelled, completed] = await Promise.all([
-    AppointmentModel.countDocuments({}),
-    AppointmentModel.countDocuments({ status: "pending" }),
-    AppointmentModel.countDocuments({ status: "confirmed" }),
-    AppointmentModel.countDocuments({ status: "cancelled" }),
-    AppointmentModel.countDocuments({ status: "completed" })
-  ]);
-
-  res.status(200).json({
-    total,
-    pending,
-    confirmed,
-    cancelled,
-    completed
-  });
+  res.status(200).json(await supabaseStore.appointmentSummary());
 });

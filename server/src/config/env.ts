@@ -13,7 +13,8 @@ const required = (name: string, fallback?: string) => {
 export const env = {
   HOST: process.env.HOST ?? "0.0.0.0",
   PORT: Number(process.env.PORT ?? 5000),
-  MONGO_URI: required("MONGO_URI"),
+  SUPABASE_URL: required("SUPABASE_URL"),
+  SUPABASE_SERVICE_ROLE_KEY: required("SUPABASE_SERVICE_ROLE_KEY"),
   JWT_SECRET: required("JWT_SECRET"),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? "7d",
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN ?? "http://localhost:4200",

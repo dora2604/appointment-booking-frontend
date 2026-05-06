@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import mongoose from "mongoose";
 import { ApiError } from "../utils/ApiError";
 
 export const errorHandler = (
@@ -12,13 +11,9 @@ export const errorHandler = (
     return res.status(error.statusCode).json({ message: error.message });
   }
 
-  if (error instanceof mongoose.Error.ValidationError) {
-    return res.status(400).json({ message: error.message });
-  }
-
-  const duplicateKeyError = error as Error & { code?: number; keyPattern?: Record<string, number> };
-  if (duplicateKeyError.code === 11000) {
-    if (duplicateKeyError.keyPattern?.email) {
+  const duplicateKeyError = error as Error & { code?: string; details?: string; message?: string };
+  if (duplicateKeyError.code === "23505") {
+    if (duplicateKeyError.details?.includes("email") || duplicateKeyError.message?.includes("email")) {
       return res.status(409).json({ message: "Email is already registered." });
     }
     return res.status(409).json({ message: "Duplicate record detected." });
