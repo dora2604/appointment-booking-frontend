@@ -160,8 +160,14 @@ import { AuthService } from "../services/auth.service";
             <option value="therapy">Therapy</option>
             <option value="dental">Dental</option>
           </select>
-          <input class="field" type="date" formControlName="from" />
-          <input class="field" type="date" formControlName="to" />
+          <label class="space-y-1">
+            <span class="field-label">From Date</span>
+            <input class="field" type="date" formControlName="from" />
+          </label>
+          <label class="space-y-1">
+            <span class="field-label">To Date</span>
+            <input class="field" type="date" formControlName="to" />
+          </label>
         </div>
 
         <div class="mt-3 flex flex-wrap gap-2">
@@ -198,7 +204,10 @@ import { AuthService } from "../services/auth.service";
                   <p class="text-xs text-slate-500">{{ item.phone }}</p>
                 </td>
                 <td class="px-4 py-3 capitalize text-slate-700">{{ item.serviceType.replace("_", " ") }}</td>
-                <td class="px-4 py-3 text-slate-700">{{ item.appointmentDate | date: "medium" }}</td>
+                <td class="px-4 py-3 text-slate-700">
+                  <p class="font-medium">{{ item.appointmentDate | date: "MMM d, y" }}</p>
+                  <p class="text-xs text-slate-500">{{ item.appointmentDate | date: "h:mm a" }}</p>
+                </td>
                 <td class="px-4 py-3">
                   <ng-container *ngIf="isAdmin; else userStatus">
                     <select
