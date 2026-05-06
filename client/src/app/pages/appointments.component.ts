@@ -129,6 +129,7 @@ import { AuthService } from "../services/auth.service";
               class="text-sm text-brand-700 underline"
               [href]="serverFileUrl(uploadedFileUrl)"
               target="_blank"
+              rel="noopener noreferrer"
             >
               Attachment ready
             </a>
@@ -231,6 +232,7 @@ import { AuthService } from "../services/auth.service";
                     class="font-semibold text-brand-700 hover:text-brand-900"
                     [href]="serverFileUrl(item.attachmentUrl)"
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
                     View
                   </a>
@@ -478,7 +480,8 @@ export class AppointmentsComponent implements OnInit {
   }
 
   serverFileUrl(relativePath: string): string {
-    return `${this.api.baseUrl.replace(/\/api$/, "")}${relativePath}`;
+    const baseUrl = this.api.baseUrl.replace(/\/api$/, "");
+    return new URL(relativePath, `${baseUrl}/`).toString();
   }
 
   private formPayload(): Partial<Appointment> {
