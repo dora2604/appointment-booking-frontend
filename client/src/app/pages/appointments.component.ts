@@ -167,10 +167,10 @@ import { AuthService } from "../services/auth.service";
         </div>
 
         <div class="mt-3 flex flex-wrap gap-2">
-          <button class="btn-primary" (click)="load(1)">
+          <button type="button" class="btn-primary" (click)="load(1)">
             Apply Filters
           </button>
-          <button class="btn-secondary" (click)="clearFilters()">
+          <button type="button" class="btn-secondary" (click)="clearFilters()">
             Clear
           </button>
         </div>
@@ -209,6 +209,7 @@ import { AuthService } from "../services/auth.service";
                     <select
                       class="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium capitalize text-slate-700 shadow-sm"
                       [value]="item.status"
+                      [disabled]="loading"
                       (change)="changeStatus(item, $any($event.target).value)"
                     >
                       <option value="pending">Pending</option>
@@ -236,8 +237,8 @@ import { AuthService } from "../services/auth.service";
                   <span *ngIf="!item.attachmentUrl">-</span>
                 </td>
                 <td class="space-x-3 px-4 py-3">
-                  <button class="font-semibold text-brand-700 hover:text-brand-900" (click)="startEdit(item)">Edit</button>
-                  <button class="font-semibold text-red-600 hover:text-red-700" (click)="remove(item)">Delete</button>
+                  <button type="button" class="font-semibold text-brand-700 hover:text-brand-900" (click)="startEdit(item)">Edit</button>
+                  <button type="button" class="font-semibold text-red-600 hover:text-red-700" (click)="remove(item)">Delete</button>
                 </td>
               </tr>
               <tr *ngIf="!loading && appointments.length === 0">
@@ -451,7 +452,11 @@ export class AppointmentsComponent implements OnInit {
     this.appointmentService.remove(item._id).subscribe({
       next: () => {
         this.success = "Appointment deleted successfully.";
-        this.load(this.page);
+        const nextPage =
+          this.appointments.length === 1 && this.page > 1
+            ? this.page - 1
+            : this.page;
+        this.load(nextPage);
       },
       error: (err) => {
         this.error = err?.status === 0 ? this.serverErrorMessage : err?.error?.message ?? "Delete failed.";

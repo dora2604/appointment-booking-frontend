@@ -14,12 +14,30 @@ const ensureDemoStorageEnabled = () => {
   }
 };
 
+const pickAppointmentPayload = (
+  payload: Partial<IAppointment | StoredAppointment>,
+  options?: { allowStatus?: boolean }
+) => {
+  const nextPayload: Record<string, unknown> = {};
+
+  if (payload.fullName !== undefined) nextPayload.fullName = payload.fullName;
+  if (payload.email !== undefined) nextPayload.email = payload.email;
+  if (payload.phone !== undefined) nextPayload.phone = payload.phone;
+  if (payload.serviceType !== undefined) nextPayload.serviceType = payload.serviceType;
+  if (payload.appointmentDate !== undefined) nextPayload.appointmentDate = payload.appointmentDate;
+  if (payload.notes !== undefined) nextPayload.notes = payload.notes;
+  if (payload.attachmentUrl !== undefined) nextPayload.attachmentUrl = payload.attachmentUrl;
+  if (options?.allowStatus && payload.status !== undefined) nextPayload.status = payload.status;
+
+  return nextPayload;
+};
+
 export const createAppointment = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new ApiError(401, "Unauthorized.");
   }
 
-  const payload = req.body as Partial<IAppointment>;
+  const payload = pickAppointmentPayload(req.body as Partial<IAppointment>);
 
   if (!isMongoAvailable()) {
     ensureDemoStorageEnabled();
@@ -173,10 +191,9 @@ export const updateAppointment = asyncHandler(async (req: Request, res: Response
       throw new ApiError(403, "Forbidden.");
     }
 
-    const payload = req.body as Partial<StoredAppointment>;
-    if (req.user.role !== "admin") {
-      delete payload.status;
-    }
+    const payload = pickAppointmentPayload(req.body as Partial<StoredAppointment>, {
+      allowStatus: req.user.role === "admin"
+    }) as Partial<StoredAppointment>;
 
     const updated = fileStore.updateAppointment(req.params.id, payload);
     return res.status(200).json({
@@ -194,12 +211,9 @@ export const updateAppointment = asyncHandler(async (req: Request, res: Response
     throw new ApiError(403, "Forbidden.");
   }
 
-  const payload = req.body as Partial<IAppointment>;
-  const isAdmin = req.user.role === "admin";
-
-  if (!isAdmin) {
-    delete payload.status;
-  }
+  const payload = pickAppointmentPayload(req.body as Partial<IAppointment>, {
+    allowStatus: req.user.role === "admin"
+  });
 
   Object.assign(appointment, payload);
   await appointment.save();
