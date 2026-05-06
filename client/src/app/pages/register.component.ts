@@ -87,10 +87,7 @@ export class RegisterComponent {
       .register(this.form.getRawValue())
       .pipe(
         catchError((err) => {
-          this.error =
-            err?.status === 0
-              ? "Cannot connect to the server. Please make sure the backend and database are running."
-              : err?.error?.message ?? "Registration failed.";
+          this.error = this.resolveErrorMessage(err, "Registration failed.");
           return throwError(() => err);
         }),
         finalize(() => {
@@ -100,5 +97,25 @@ export class RegisterComponent {
       .subscribe(() => {
         this.router.navigateByUrl("/appointments");
       });
+  }
+
+  private resolveErrorMessage(err: unknown, fallback: string): string {
+    const httpError = err as {
+      status?: number;
+      error?: { message?: string } | string;
+      message?: string;
+      statusText?: string;
+    };
+
+    if (httpError?.status === 0) {
+      return "Cannot connect to the server. Please make sure the backend and database are running.";
+    }
+    if (typeof httpError?.error === "string" && httpError.error.trim()) {
+      return httpError.error;
+    }
+    if (httpError?.error && typeof httpError.error === "object" && "message" in httpError.error) {
+      return httpError.error.message || fallback;
+    }
+    return httpError?.message || httpError?.statusText || fallback;
   }
 }
