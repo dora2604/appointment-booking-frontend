@@ -1,4 +1,4 @@
-import { supabaseStore } from "../repositories/supabaseStore";
+import { getSupabaseErrorMessage, supabaseStore } from "../repositories/supabaseStore";
 
 export let isSupabaseConnected = false;
 let isConnecting = false;
@@ -55,7 +55,7 @@ export const connectDb = async () => {
         return;
       } catch (error) {
         isSupabaseConnected = false;
-        lastDatabaseError = error instanceof Error ? error.message : "Unknown Supabase error.";
+        lastDatabaseError = getSupabaseErrorMessage(error);
         // eslint-disable-next-line no-console
         console.warn(`Supabase connection attempt ${attempt}/${MAX_CONNECT_ATTEMPTS} failed.`);
         // eslint-disable-next-line no-console

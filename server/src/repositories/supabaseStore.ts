@@ -105,19 +105,43 @@ const normalizeAppointmentPayload = (payload: Partial<AppointmentRecord>) => {
 };
 
 const throwQueryError = (message: string, error: unknown): never => {
-  const details =
-    error && typeof error === "object" && "message" in error && typeof error.message === "string"
-      ? error.message
-      : "Unknown Supabase error.";
+  const details = getSupabaseErrorMessage(error);
   throw new ApiError(503, `${message}: ${details}`);
+};
+
+export const getSupabaseErrorMessage = (error: unknown) => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const message = typeof record.message === "string" ? record.message : "";
+    const details = typeof record.details === "string" ? record.details : "";
+    const hint = typeof record.hint === "string" ? record.hint : "";
+    const code = typeof record.code === "string" ? record.code : "";
+    const parts = [message, details, hint, code].filter(Boolean);
+
+    if (parts.length > 0) {
+      return parts.join(" | ");
+    }
+
+    return JSON.stringify(record);
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+
+  return "Unknown Supabase error.";
 };
 
 export const supabaseStore = {
   async ping() {
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase.from("users").select("id", { count: "exact", head: true });
+    const { error } = await supabase.from("users").select("id").limit(1);
     if (error) {
-      throw error;
+      throw new Error(getSupabaseErrorMessage(error));
     }
   },
 
