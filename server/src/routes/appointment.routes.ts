@@ -23,7 +23,7 @@ const appointmentValidation = [
   body("serviceType").isIn(["consultation", "follow_up", "therapy", "dental"]),
   body("appointmentDate").isISO8601(),
   body("notes").optional().trim().isLength({ max: 500 }).escape(),
-  body("attachmentUrl").optional().trim().isString().escape()
+  body("attachmentUrl").optional().trim().isString()
 ];
 
 /**
@@ -192,7 +192,7 @@ appointmentRoutes.put(
     body("appointmentDate").optional().isISO8601(),
     body("status").optional().isIn(["pending", "confirmed", "cancelled", "completed"]),
     body("notes").optional().trim().isLength({ max: 500 }).escape(),
-    body("attachmentUrl").optional().trim().isString().escape()
+    body("attachmentUrl").optional().trim().isString()
   ],
   validateRequest,
   updateAppointment

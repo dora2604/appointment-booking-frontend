@@ -481,7 +481,8 @@ export class AppointmentsComponent implements OnInit {
 
   serverFileUrl(relativePath: string): string {
     const baseUrl = this.api.baseUrl.replace(/\/api$/, "");
-    return new URL(relativePath, `${baseUrl}/`).toString();
+    const normalizedPath = this.decodeAttachmentPath(relativePath);
+    return new URL(normalizedPath, `${baseUrl}/`).toString();
   }
 
   private formPayload(): Partial<Appointment> {
@@ -522,6 +523,13 @@ export class AppointmentsComponent implements OnInit {
 
   private toIsoOrEmpty(value: string): string {
     return value ? new Date(value).toISOString() : "";
+  }
+
+  private decodeAttachmentPath(value: string): string {
+    return value
+      .replace(/&#x2f;/gi, "/")
+      .replace(/&#47;/gi, "/")
+      .replace(/&amp;/gi, "&");
   }
 
   private clearMessages() {
