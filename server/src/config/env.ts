@@ -11,6 +11,7 @@ const required = (name: string, fallback?: string) => {
 };
 
 export const env = {
+  HOST: process.env.HOST ?? "0.0.0.0",
   PORT: Number(process.env.PORT ?? 5000),
   MONGO_URI: required("MONGO_URI"),
   JWT_SECRET: required("JWT_SECRET"),
