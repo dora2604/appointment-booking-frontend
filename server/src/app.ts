@@ -24,14 +24,53 @@ const normalizeOrigin = (origin: string) => {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 };
 
-const allowedOrigins = new Set(
-  env.CLIENT_ORIGIN.split(",").map(normalizeOrigin).filter(Boolean)
-);
+const configuredOrigins = env.CLIENT_ORIGIN.split(",").map(normalizeOrigin).filter(Boolean);
+
+const getHostname = (origin: string) => {
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    return "";
+  }
+};
+
+const getVercelProjectPrefix = (hostname: string) => {
+  if (!hostname.endsWith(".vercel.app")) {
+    return "";
+  }
+  const label = hostname.replace(/\.vercel\.app$/i, "");
+  const segments = label.split("-").filter(Boolean);
+  if (segments.length <= 3) {
+    return label;
+  }
+  return segments.slice(0, 3).join("-");
+};
+
+const allowedOrigins = new Set(configuredOrigins);
+const allowedVercelPrefixes = configuredOrigins
+  .map((origin) => getVercelProjectPrefix(getHostname(origin)))
+  .filter(Boolean);
+
+const isAllowedOrigin = (origin: string) => {
+  if (allowedOrigins.has(origin)) {
+    return true;
+  }
+
+  const hostname = getHostname(origin);
+  if (!hostname.endsWith(".vercel.app")) {
+    return false;
+  }
+
+  return allowedVercelPrefixes.some((prefix) => {
+    const normalizedPrefix = `${prefix}-`;
+    return hostname === `${prefix}.vercel.app` || hostname.startsWith(normalizedPrefix);
+  });
+};
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin)) {
+      if (!origin || isAllowedOrigin(origin)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS blocked origin: ${origin}`));

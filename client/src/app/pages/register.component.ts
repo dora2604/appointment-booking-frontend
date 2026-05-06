@@ -110,6 +110,9 @@ export class RegisterComponent {
     if (httpError?.status === 0) {
       return "Cannot connect to the server. Please make sure the backend and database are running.";
     }
+    if (httpError?.message?.includes("Timeout")) {
+      return "The live backend is still waking up on Render. Please wait a moment and try registering again.";
+    }
     if (typeof httpError?.error === "string" && httpError.error.trim()) {
       return httpError.error;
     }

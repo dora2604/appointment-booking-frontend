@@ -15,6 +15,8 @@ interface RegisterInput extends Credentials {
   role?: "admin" | "user";
 }
 
+const AUTH_REQUEST_TIMEOUT_MS = 65000;
+
 @Injectable({ providedIn: "root" })
 export class AuthService {
   private userSubject = new BehaviorSubject<User | null>(this.getStoredUser());
@@ -23,7 +25,9 @@ export class AuthService {
   constructor(
     private readonly http: HttpClient,
     private readonly api: ApiService
-  ) {}
+  ) {
+    this.wakeServer();
+  }
 
   get token(): string | null {
     return localStorage.getItem("token");
@@ -40,13 +44,13 @@ export class AuthService {
   register(payload: RegisterInput): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.api.baseUrl}/auth/register`, payload)
-      .pipe(timeout(15000), tap((response) => this.persistAuth(response)));
+      .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS), tap((response) => this.persistAuth(response)));
   }
 
   login(payload: Credentials): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(`${this.api.baseUrl}/auth/login`, payload)
-      .pipe(timeout(15000), tap((response) => this.persistAuth(response)));
+      .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS), tap((response) => this.persistAuth(response)));
   }
 
   logout() {
@@ -64,5 +68,11 @@ export class AuthService {
   private getStoredUser(): User | null {
     const raw = localStorage.getItem("user");
     return raw ? (JSON.parse(raw) as User) : null;
+  }
+
+  private wakeServer() {
+    this.http.get(`${this.api.baseUrl}/health`).subscribe({
+      error: () => undefined
+    });
   }
 }
