@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .angular/
+.env
+server/.env
 .env.local
 client/dist/
 server/dist/
